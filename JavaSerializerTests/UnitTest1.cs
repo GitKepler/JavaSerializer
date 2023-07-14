@@ -244,6 +244,8 @@ namespace JavaSerializerTests
                 Assert.That(strings[1].FinalString, Is.EqualTo("Test_Sub1"));
             });
 
+            Assert.That(typedEntry.Fields, Is.Not.Null);
+
             Assert.Multiple(() =>
             {
                 Assert.That(typedEntry.Fields, Contains.Key("yearwritten"));
