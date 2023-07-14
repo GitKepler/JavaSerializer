@@ -1,4 +1,5 @@
 using JavaSerializer.Content.Object;
+using JavaSerializer.Content.Object.Inteface;
 
 namespace JavaSerializerTests
 {
@@ -95,18 +96,18 @@ namespace JavaSerializerTests
             {
                 Assert.That(typedContent.ClassDescriptor, Is.Not.Null);
                 Assert.That(typedContent.Data, Has.Length.EqualTo(3));
-                Assert.That(typedContent.Data[0], Is.InstanceOf<UtfStringContent>());
-                Assert.That(typedContent.Data[1], Is.InstanceOf<UtfStringContent>());
-                Assert.That(typedContent.Data[2], Is.InstanceOf<UtfStringContent>());
+                Assert.That(typedContent.Data[0], Is.InstanceOf<IString>());
+                Assert.That(typedContent.Data[1], Is.InstanceOf<IString>());
+                Assert.That(typedContent.Data[2], Is.InstanceOf<IString>());
             });
 
-            var typedEntries = typedContent.Data.OfType<UtfStringContent>().ToImmutableArray();
+            var typedEntries = typedContent.Data.OfType<IString>().ToImmutableArray();
 
             Assert.Multiple(() =>
             {
-                Assert.That(typedEntries[0].String, Is.EqualTo("This"));
-                Assert.That(typedEntries[1].String, Is.EqualTo("Is"));
-                Assert.That(typedEntries[2].String, Is.EqualTo("A Test"));
+                Assert.That(typedEntries[0].FinalString, Is.EqualTo("This"));
+                Assert.That(typedEntries[1].FinalString, Is.EqualTo("Is"));
+                Assert.That(typedEntries[2].FinalString, Is.EqualTo("A Test"));
                 Assert.That(typedEntries, Has.Length.EqualTo(3));
             });
         }
@@ -167,6 +168,24 @@ namespace JavaSerializerTests
                 Assert.That(typedEntries[1].Values?.Values.Single(), Is.EqualTo(2));
                 Assert.That(typedEntries[2].Values?.Values.Single(), Is.EqualTo(3));
             });
+
+            Assert.That(typedEntries[0].Fields, Contains.Key("value"));
+
+            var valueField = typedEntries[0].Fields["value"];
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(typedEntries[0].Values, Contains.Key(valueField));
+                Assert.That(typedEntries[1].Values, Contains.Key(valueField));
+                Assert.That(typedEntries[2].Values, Contains.Key(valueField));
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(typedEntries[0].Values[valueField], Is.EqualTo(1));
+                Assert.That(typedEntries[1].Values[valueField], Is.EqualTo(2));
+                Assert.That(typedEntries[2].Values[valueField], Is.EqualTo(3));
+            });
         }
 
         [Test]
@@ -213,16 +232,47 @@ namespace JavaSerializerTests
             Assert.Multiple(() =>
             {
                 Assert.That(typedEntry.Values.Values.ElementAt(0), Is.EqualTo(2001));
-                Assert.That(typedEntry.Values.Values.ElementAt(1), Is.InstanceOf<UtfStringContent>());
-                Assert.That(typedEntry.Values.Values.ElementAt(2), Is.InstanceOf<UtfStringContent>());
+                Assert.That(typedEntry.Values.Values.ElementAt(1), Is.InstanceOf<IString>());
+                Assert.That(typedEntry.Values.Values.ElementAt(2), Is.InstanceOf<IString>());
             });
 
-            var strings = typedEntry.Values.Values.OfType<UtfStringContent>().ToImmutableArray();
+            var strings = typedEntry.Values.Values.OfType<IString>().ToImmutableArray();
 
             Assert.Multiple(() =>
             {
-                Assert.That(strings[0].String, Is.EqualTo("Test_Auth1"));
-                Assert.That(strings[1].String, Is.EqualTo("Test_Sub1"));
+                Assert.That(strings[0].FinalString, Is.EqualTo("Test_Auth1"));
+                Assert.That(strings[1].FinalString, Is.EqualTo("Test_Sub1"));
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(typedEntry.Fields, Contains.Key("yearwritten"));
+                Assert.That(typedEntry.Fields, Contains.Key("author"));
+                Assert.That(typedEntry.Fields, Contains.Key("subject"));
+            });
+
+            var yearField = typedEntry.Fields["yearwritten"];
+            var authorField = typedEntry.Fields["author"];
+            var subjectField = typedEntry.Fields["subject"];
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(typedEntry.Values, Contains.Key(yearField));
+                Assert.That(typedEntry.Values, Contains.Key(authorField));
+                Assert.That(typedEntry.Values, Contains.Key(subjectField));
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(typedEntry.Values[yearField], Is.EqualTo(2001));
+                Assert.That(typedEntry.Values[authorField], Is.InstanceOf<IString>());
+                Assert.That(typedEntry.Values[subjectField], Is.InstanceOf<IString>());
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(((IString)typedEntry.Values[authorField]).FinalString, Is.EqualTo("Test_Auth1"));
+                Assert.That(((IString)typedEntry.Values[subjectField]).FinalString, Is.EqualTo("Test_Sub1"));
             });
         }
     }
