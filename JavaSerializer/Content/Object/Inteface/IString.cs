@@ -7,5 +7,6 @@ namespace JavaSerializer.Content.Object.Inteface
 {
     public interface IString : IObject
     {
+        string? FinalString { get; set; }
     }
 }

@@ -12,5 +12,6 @@ namespace JavaSerializer.Content.Object
 
         public TokenType Header { get; }
         public string? String { get; set; }
+        public string? FinalString { get => String; set => String = value; }
     }
 }
