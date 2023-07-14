@@ -72,7 +72,7 @@ namespace JavaSerializer
                     ReadClass(classContent);
                     content = classContent;
                     break;
-                case TokenType.TC_ARRAY:
+                case TokenType.TC_ARRAY: // done
                     var arrayContent = new ArrayContent(contentType);
                     ReadArray(arrayContent);
                     content = arrayContent;
