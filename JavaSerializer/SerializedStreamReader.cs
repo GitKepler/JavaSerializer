@@ -141,7 +141,7 @@ namespace JavaSerializer
         private void ReadArray(ArrayContent content)
         {
             _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
-            if (classDescriptor is null) throw new EndOfStreamException("End of stream reached");
+            if (classDescriptor is null) throw new EndOfStreamException();
             content.ClassDescriptor = classDescriptor;
             _handleMapping.Add(content);
 
@@ -187,7 +187,7 @@ namespace JavaSerializer
                 for(int i = 0; i < size; i++)
                 {
                     _ = ReadContent(out var resultingObject, true, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_ARRAY, TokenType.TC_OBJECT, TokenType.TC_STRING, TokenType.TC_LONGSTRING);
-                    if (resultingObject is null) throw new EndOfStreamException("End of stream reached");
+                    if (resultingObject is null) throw new EndOfStreamException();
 
                     content.Data[i] = resultingObject;
                 }
@@ -197,7 +197,7 @@ namespace JavaSerializer
         private void ReadObject(ObjectContent content)
         {
             _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_STRING, TokenType.TC_LONGSTRING);
-            if (classDescriptor is null) throw new EndOfStreamException("End of stream reached");
+            if (classDescriptor is null) throw new EndOfStreamException();
             content.ClassDescriptor = classDescriptor;
             _handleMapping.Add(content);
 
@@ -224,7 +224,7 @@ namespace JavaSerializer
                 else if(field is ObjectField objectField)
                 {
                     _ = ReadContent(out var resultingObject, true, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_ARRAY, TokenType.TC_OBJECT, TokenType.TC_LONGSTRING, TokenType.TC_STRING);
-                    if (resultingObject is null) throw new EndOfStreamException("End of stream reached");
+                    if (resultingObject is null) throw new EndOfStreamException();
 
                     content.Values[objectField] = resultingObject;
                 }
@@ -295,20 +295,20 @@ namespace JavaSerializer
         private void ReadEnum(EnumContent content)
         {
             _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
-            if (classDescriptor is null) throw new EndOfStreamException("End of stream reached");
+            if (classDescriptor is null) throw new EndOfStreamException();
             content.ClassDescriptor = classDescriptor;
 
             _handleMapping.Add(content);
 
             _ = ReadContent(out var stringContent, true, TokenType.TC_STRING, TokenType.TC_LONGSTRING, TokenType.TC_REFERENCE);
-            if (stringContent is null) throw new EndOfStreamException("End of stream reached");
+            if (stringContent is null) throw new EndOfStreamException();
             content.EnumConstantName = stringContent;
         }
 
         private void ReadClass(ClassContent content)
         {
             _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
-            if (classDescriptor is null) throw new EndOfStreamException("End of stream reached");
+            if (classDescriptor is null) throw new EndOfStreamException();
             content.ClassDescriptor = classDescriptor;
 
             _handleMapping.Add(content);
@@ -335,7 +335,7 @@ namespace JavaSerializer
             }
 
             _ = ReadContent(out var superClassDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
-            if (superClassDescriptor is null) throw new EndOfStreamException("End of stream reached");
+            if (superClassDescriptor is null) throw new EndOfStreamException();
             content.SuperClassDescriptor = superClassDescriptor;
         }
 
@@ -363,7 +363,7 @@ namespace JavaSerializer
             }
 
             _ = ReadContent(out var superClassDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
-            if (superClassDescriptor is null) throw new EndOfStreamException("End of stream reached");
+            if (superClassDescriptor is null) throw new EndOfStreamException();
             content.SuperClassDescriptor = superClassDescriptor;
         }
 
@@ -374,7 +374,7 @@ namespace JavaSerializer
             if(fieldType == FieldType.Array || fieldType == FieldType.Object)
             {
                 _ = ReadContent(out var stringContent, true, TokenType.TC_STRING, TokenType.TC_LONGSTRING, TokenType.TC_REFERENCE);
-                if (stringContent is null) throw new EndOfStreamException("End of stream reached");
+                if (stringContent is null) throw new EndOfStreamException();
 
                 return new ObjectField(fieldType, fieldName, stringContent);
             }
