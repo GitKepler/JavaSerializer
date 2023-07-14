@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33723.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JavaSerializer", "JavaSerializer\JavaSerializer.csproj", "{65A43E85-D1FA-402C-9CD7-EE246E8A9D5C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JavaSerializerTests", "JavaSerializerTests\JavaSerializerTests.csproj", "{8438ED3C-C129-4CEF-830C-8F197990F12C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{65A43E85-D1FA-402C-9CD7-EE246E8A9D5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65A43E85-D1FA-402C-9CD7-EE246E8A9D5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65A43E85-D1FA-402C-9CD7-EE246E8A9D5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65A43E85-D1FA-402C-9CD7-EE246E8A9D5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8438ED3C-C129-4CEF-830C-8F197990F12C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8438ED3C-C129-4CEF-830C-8F197990F12C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8438ED3C-C129-4CEF-830C-8F197990F12C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8438ED3C-C129-4CEF-830C-8F197990F12C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1EB71CAD-1EEB-4AA5-B120-6CBA4F993E6E}
+	EndGlobalSection
+EndGlobal
