@@ -123,13 +123,13 @@ namespace JavaSerializer
                     parsedData = new ResetContent(contentType);
                     break;
                 case TokenType.TC_BLOCKDATA: // done
-                    var blockDataContent = new BlockDataShortContent(contentType);
+                    var blockDataContent = new BlockDataContent(contentType);
                     blockDataContent.Size = _reader.ReadByte();
                     blockDataContent.Data = _reader.ReadBytes(blockDataContent.Size);
                     parsedData = blockDataContent;
                     break;
                 case TokenType.TC_BLOCKDATALONG: // done
-                    var blockDataLongContent = new BlockDataLongContent(contentType);
+                    var blockDataLongContent = new BlockDataContent(contentType);
                     blockDataLongContent.Size = _reader.ReadInt32BE();
                     blockDataLongContent.Data = _reader.ReadBytes(blockDataLongContent.Size);
                     parsedData = blockDataLongContent;

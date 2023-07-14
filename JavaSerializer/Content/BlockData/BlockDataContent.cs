@@ -2,9 +2,9 @@
 
 namespace JavaSerializer.Content.BlockData
 {
-    public class BlockDataShortContent : IBlockData
+    public class BlockDataContent : IBlockData
     {
-        public BlockDataShortContent(TokenType contentType)
+        public BlockDataContent(TokenType contentType)
         {
             Header = contentType;
         }
