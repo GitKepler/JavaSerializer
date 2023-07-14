@@ -3,7 +3,7 @@ using JavaSerializer.Content.Object.Inteface;
 
 namespace JavaSerializer.Content.Object
 {
-    public class ClassContent : IObject
+    public class ClassContent : IObject, IObjectWithClassDescriptor
     {
         public ClassContent(TokenType contentType)
         {

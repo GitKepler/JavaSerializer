@@ -15,6 +15,6 @@ namespace JavaSerializer.Content.Object.ClassDesc
         public TokenType Header { get; }
         public IList<string>? InterfaceNames { get; set; }
         public IList<IContent>? Annotations { get; set; }
-        public IClassDescriptor? SuperClassDescriptor { get; set; }
+        public IClassDescriptor? ClassDescriptor { get; set; }
     }
 }

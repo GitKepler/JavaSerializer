@@ -19,6 +19,6 @@ namespace JavaSerializer.Content.Object.ClassDesc
         public ClassDescFlag? ClassDescFlag { get; set; }
         public IList<IClassField>? Fields { get; set; }
         public IList<IContent>? Annotations { get; set; }
-        public IClassDescriptor? SuperClassDescriptor { get; set; }
+        public IClassDescriptor? ClassDescriptor { get; set; }
     }
 }

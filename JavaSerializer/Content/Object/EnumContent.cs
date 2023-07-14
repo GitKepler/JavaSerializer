@@ -3,7 +3,7 @@ using JavaSerializer.Content.Object.Inteface;
 
 namespace JavaSerializer.Content.Object
 {
-    public class EnumContent : IObject
+    public class EnumContent : IObject, IObjectWithClassDescriptor
     {
         public EnumContent(TokenType contentType)
         {

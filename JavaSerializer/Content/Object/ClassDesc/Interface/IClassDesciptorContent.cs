@@ -4,9 +4,8 @@ using System.Collections.Generic;
 
 namespace JavaSerializer.Content.Object.ClassDesc.Interface
 {
-    public interface IClassDesciptorContent : IObject, IClassDescriptor
+    public interface IClassDesciptorContent : IObject, IClassDescriptor, IObjectWithClassDescriptor
     {
-        IClassDescriptor? SuperClassDescriptor { get; set; }
         IList<IContent>? Annotations { get; set; }
     }
 }

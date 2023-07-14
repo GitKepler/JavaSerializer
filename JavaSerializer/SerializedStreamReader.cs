@@ -93,7 +93,7 @@ namespace JavaSerializer
                     break;
                 case TokenType.TC_CLASSDESC: // done
                     var classDescContent = new ClassDescriptorContent(contentType);
-                    ReadClassDescriptor(classDescContent);
+                    ReadClassDescriptorContent(classDescContent);
                     parsedData = classDescContent;
                     break;
                 case TokenType.TC_PROXYCLASSDESC: // done
@@ -147,11 +147,18 @@ namespace JavaSerializer
             return true;
         }
 
-        private void ReadArray(ArrayContent content)
+        private IClassDescriptor ReadClassDescriptor(IObjectWithClassDescriptor objectWithClassDescriptor)
         {
             _ = ReadContent<IClassDescriptor>(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
             if (classDescriptor is null) throw new EndOfStreamException();
-            content.ClassDescriptor = classDescriptor;
+            objectWithClassDescriptor.ClassDescriptor = classDescriptor;
+
+            return classDescriptor;
+        }
+
+        private void ReadArray(ArrayContent content)
+        {
+            var classDescriptor = ReadClassDescriptor(content);
             _handleMapping.Add(content);
 
             int size = _reader.ReadInt32BE();
@@ -205,9 +212,7 @@ namespace JavaSerializer
 
         private void ReadObject(ObjectContent content)
         {
-            _ = ReadContent<IClassDescriptor>(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_STRING, TokenType.TC_LONGSTRING);
-            if (classDescriptor is null) throw new EndOfStreamException();
-            content.ClassDescriptor = classDescriptor;
+            var classDescriptor = ReadClassDescriptor(content);
             _handleMapping.Add(content);
 
             foreach(var field in GetClassFieldsFromClassDescriptor(classDescriptor))
@@ -244,13 +249,13 @@ namespace JavaSerializer
             }
         }
 
-        private IReadOnlyList<IClassField> GetClassFieldsFromClassDescriptor(IContent? classDescriptorOrPointer)
+        private IReadOnlyList<IClassField> GetClassFieldsFromClassDescriptor(IClassDescriptor? classDescriptorOrPointer)
         {
             var fields = new List<IList<IClassField>>();
 
-            while(classDescriptorOrPointer?.Header == TokenType.TC_REFERENCE && classDescriptorOrPointer is ReferenceContent reference)
+            while(classDescriptorOrPointer?.Header == TokenType.TC_REFERENCE && classDescriptorOrPointer is ClassDescriptorReference reference)
             {
-                classDescriptorOrPointer = reference.PointerValue;
+                classDescriptorOrPointer = reference.Value;
             }
 
             if (classDescriptorOrPointer?.Header == TokenType.TC_NULL) throw new InvalidDataException("The class descriptor is a null reference.");
@@ -261,7 +266,7 @@ namespace JavaSerializer
             if(classDescriptor.Fields is not null)
                 fields.Add(classDescriptor.Fields);
 
-            var superClassDescriptor = classDescriptor.SuperClassDescriptor;
+            var superClassDescriptor = classDescriptor.ClassDescriptor;
 
             while (superClassDescriptor?.Header == TokenType.TC_REFERENCE || superClassDescriptor?.Header == TokenType.TC_CLASSDESC)
             {
@@ -275,7 +280,7 @@ namespace JavaSerializer
                     if (classDescriptorSuperClass.Fields is not null)
                         fields.Add(classDescriptorSuperClass.Fields);
                     classDescriptor = classDescriptorSuperClass;
-                    superClassDescriptor = classDescriptorSuperClass.SuperClassDescriptor;
+                    superClassDescriptor = classDescriptorSuperClass.ClassDescriptor;
                 }
                 else
                 {
@@ -300,9 +305,7 @@ namespace JavaSerializer
 
         private void ReadEnum(EnumContent content)
         {
-            _ = ReadContent<IClassDescriptor>(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
-            if (classDescriptor is null) throw new EndOfStreamException();
-            content.ClassDescriptor = classDescriptor;
+            ReadClassDescriptor(content);
 
             _handleMapping.Add(content);
 
@@ -313,9 +316,7 @@ namespace JavaSerializer
 
         private void ReadClass(ClassContent content)
         {
-            _ = ReadContent<IClassDescriptor>(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
-            if (classDescriptor is null) throw new EndOfStreamException();
-            content.ClassDescriptor = classDescriptor;
+            ReadClassDescriptor(content);
 
             _handleMapping.Add(content);
         }
@@ -340,12 +341,10 @@ namespace JavaSerializer
                 content.Annotations.Add(annotation);
             }
 
-            _ = ReadContent<IClassDescriptor>(out var superClassDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
-            if (superClassDescriptor is null) throw new EndOfStreamException();
-            content.SuperClassDescriptor = superClassDescriptor;
+            ReadClassDescriptor(content);
         }
 
-        private void ReadClassDescriptor(ClassDescriptorContent content)
+        private void ReadClassDescriptorContent(ClassDescriptorContent content)
         {
             content.ClassName = _reader.ReadUInt16String();
             content.SerialVersionUID = _reader.ReadUInt64BE();
@@ -368,9 +367,7 @@ namespace JavaSerializer
                 content.Annotations.Add(annotation);
             }
 
-            _ = ReadContent<IClassDescriptor>(out var superClassDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
-            if (superClassDescriptor is null) throw new EndOfStreamException();
-            content.SuperClassDescriptor = superClassDescriptor;
+            ReadClassDescriptor(content);
         }
 
         private IClassField ReadField()
