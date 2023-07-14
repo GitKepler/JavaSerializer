@@ -217,8 +217,6 @@ namespace JavaSerializer
 
             foreach(var field in GetClassFieldsFromClassDescriptor(classDescriptor))
             {
-                content.Values ??= new Dictionary<IClassField, object>();
-
                 if(field is PrimitiveField primitiveField)
                 {
                     content.Values[primitiveField] = primitiveField.Type switch
@@ -247,6 +245,8 @@ namespace JavaSerializer
                     throw new InvalidDataException("The provided object is not valid (unknown field type)");
                 }
             }
+
+            content.GenerateFieldMapping();
         }
 
         private IReadOnlyList<IClassField> GetClassFieldsFromClassDescriptor(IClassDescriptor? classDescriptorOrPointer)
