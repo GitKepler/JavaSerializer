@@ -158,7 +158,7 @@ namespace JavaSerializer
 
             if (classDescriptor?.Header != TokenType.TC_CLASSDESC || classDescriptor is not ClassDescriptorContent finalClassDescriptor) throw new InvalidDataException($"The object is not a class descriptor but a {classDescriptor?.Header}.");
 
-            if(finalClassDescriptor.ClassName?.Length == 2 && finalClassDescriptor.ClassName[0] == '[')
+            if(finalClassDescriptor.ClassName?.Length == 2 && finalClassDescriptor.ClassName[0] == (byte)FieldType.Array)
             {
                 var fieldTypeValue = (byte)finalClassDescriptor.ClassName[1];
                 if (!Enum.IsDefined(typeof(FieldType), fieldTypeValue)) throw new InvalidDataException($"Unknown field type: {finalClassDescriptor.ClassName}");
