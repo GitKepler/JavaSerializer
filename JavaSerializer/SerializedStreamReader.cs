@@ -387,8 +387,4 @@ namespace JavaSerializer
             _reader.Dispose();
         }
     }
-
-    public class SerializedStreamWriter
-    {
-    }
 }
