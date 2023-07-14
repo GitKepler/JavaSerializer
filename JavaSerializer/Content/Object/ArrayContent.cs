@@ -1,4 +1,5 @@
 ﻿using JavaSerializer.Content.Interface;
+using JavaSerializer.Content.Object.Inteface;
 
 namespace JavaSerializer.Content.Object
 {
@@ -10,7 +11,7 @@ namespace JavaSerializer.Content.Object
         }
 
         public TokenType Header { get; }
-        public IContent? ClassDescriptor { get; set; }
+        public IClassDescriptor? ClassDescriptor { get; set; }
         public object[]? Data { get; set; }
     }
 }

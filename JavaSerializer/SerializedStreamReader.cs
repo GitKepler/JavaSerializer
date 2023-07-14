@@ -10,6 +10,8 @@ using JavaSerializer.Content.Object;
 using JavaSerializer.Content.Object.ClassDesc;
 using JavaSerializer.Content.Object.ClassDesc.FieldDescriptor;
 using JavaSerializer.Content.Object.ClassDesc.FieldDescriptor.Interface;
+using JavaSerializer.Content.Object.Extensions;
+using JavaSerializer.Content.Object.Inteface;
 
 namespace JavaSerializer
 {
@@ -32,7 +34,7 @@ namespace JavaSerializer
             if (magic != 0xACED) throw new InvalidDataException($"Invalid magic number: Received 0x{magic:X4}, Expected 0xACED.");
             Version = _reader.ReadUInt16BE();
 
-            while (ReadContent(out var content, false, TokenType.TC_ENDBLOCKDATA) && content is not null)
+            while (ReadContent<IContent>(out var content, false, TokenType.TC_ENDBLOCKDATA) && content is not null)
             {
                 _content.Add(content);
             }
@@ -43,7 +45,7 @@ namespace JavaSerializer
 
         private const uint HandleOffset = 0x007E0000;
 
-        private bool ReadContent(out IContent? content, bool whitelistRestriction, params TokenType[] restrictions)
+        private bool ReadContent<TData>(out TData? content, bool whitelistRestriction, params TokenType[] restrictions) where TData : class, IContent
         {
             TokenType contentType;
             try
@@ -59,83 +61,95 @@ namespace JavaSerializer
             if (restrictions is not null && (whitelistRestriction ^ restrictions.Contains(contentType)))
                 throw new InvalidDataException($"An invalid content has been read. Fetched content type = {contentType}.");
 
+            IContent parsedData;
+
             switch (contentType)
             {
                 case TokenType.TC_OBJECT: // done
                     var objectContent = new ObjectContent(contentType);
                     ReadObject(objectContent);
-                    content = objectContent;
+                    parsedData = objectContent;
                     break;
                 case TokenType.TC_CLASS: // done
                     var classContent = new ClassContent(contentType);
                     ReadClass(classContent);
-                    content = classContent;
+                    parsedData = classContent;
                     break;
                 case TokenType.TC_ARRAY: // done
                     var arrayContent = new ArrayContent(contentType);
                     ReadArray(arrayContent);
-                    content = arrayContent;
+                    parsedData = arrayContent;
                     break;
                 case TokenType.TC_LONGSTRING: // done
                 case TokenType.TC_STRING: // done
                     var stringContent = new UtfStringContent(contentType);
                     ReadString(stringContent);
-                    content = stringContent;
+                    parsedData = stringContent;
                     break;
                 case TokenType.TC_ENUM: // done
                     var enumContent = new EnumContent(contentType);
                     ReadEnum(enumContent);
-                    content = enumContent;
+                    parsedData = enumContent;
                     break;
                 case TokenType.TC_CLASSDESC: // done
                     var classDescContent = new ClassDescriptorContent(contentType);
                     ReadClassDescriptor(classDescContent);
-                    content = classDescContent;
+                    parsedData = classDescContent;
                     break;
                 case TokenType.TC_PROXYCLASSDESC: // done
                     var proxyDescContent = new ProxyClassDescContent(contentType);
                     ReadProxyClassDescriptor(proxyDescContent);
-                    content = proxyDescContent;
+                    parsedData = proxyDescContent;
                     break;
                 case TokenType.TC_REFERENCE: // done
-                    var localReference = new ReferenceContent(contentType);
                     var handleValue = (int)(_reader.ReadUInt32BE() - HandleOffset);
-                    localReference.PointerValue = HandleMapping[handleValue];
-                    content = localReference;
+                    var referenceValue = HandleMapping[handleValue];
+                    parsedData = referenceValue switch
+                    {
+                        IString stringReference => new StringReference(contentType, stringReference),
+                        IClassDescriptor classDescriptor => new ClassDescriptorReference(contentType, classDescriptor),
+                        IObject freeReference => new FreeReference(contentType, freeReference),
+                        null => throw new InvalidDataException("Null reference parsed."),
+                        _ => throw new InvalidDataException($"Unknown reference type parsed: {referenceValue.GetType()}")
+                    };
                     break;
                 case TokenType.TC_NULL: // done
-                    content = new NullReferenceContent(contentType);
+                    parsedData = new NullReferenceContent(contentType);
                     break;
                 case TokenType.TC_EXCEPTION:
-                    content = new ExceptionContent(contentType);
+                    parsedData = new ExceptionContent(contentType);
                     break;
                 case TokenType.TC_RESET: // done
-                    content = new ResetContent(contentType);
+                    parsedData = new ResetContent(contentType);
                     break;
                 case TokenType.TC_BLOCKDATA: // done
                     var blockDataContent = new BlockDataShortContent(contentType);
                     blockDataContent.Size = _reader.ReadByte();
                     blockDataContent.Data = _reader.ReadBytes(blockDataContent.Size);
-                    content = blockDataContent;
+                    parsedData = blockDataContent;
                     break;
                 case TokenType.TC_BLOCKDATALONG: // done
                     var blockDataLongContent = new BlockDataLongContent(contentType);
                     blockDataLongContent.Size = _reader.ReadInt32BE();
                     blockDataLongContent.Data = _reader.ReadBytes(blockDataLongContent.Size);
-                    content = blockDataLongContent;
+                    parsedData = blockDataLongContent;
                     break;
                 case TokenType.TC_ENDBLOCKDATA: // done
-                    content = new EndBlockDataContent(contentType);
+                    parsedData = new EndBlockDataContent(contentType);
                     break;
                 default: throw new InvalidDataException($"Invalid content type received: {contentType}");
             }
+
+            if (parsedData is not TData castedContent) throw new InvalidDataException($"The parsed data is not of the correct type: Expected type is {typeof(TData)}, received type is {parsedData.GetType()}");
+
+            content = castedContent;
 
             return true;
         }
 
         private void ReadArray(ArrayContent content)
         {
-            _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
+            _ = ReadContent<IClassDescriptor>(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
             if (classDescriptor is null) throw new EndOfStreamException();
             content.ClassDescriptor = classDescriptor;
             _handleMapping.Add(content);
@@ -143,9 +157,9 @@ namespace JavaSerializer
             int size = _reader.ReadInt32BE();
             content.Data = new object[size];
 
-            while (classDescriptor?.Header == TokenType.TC_REFERENCE && classDescriptor is ReferenceContent reference)
+            while (classDescriptor?.Header == TokenType.TC_REFERENCE && classDescriptor is ClassDescriptorReference reference)
             {
-                classDescriptor = reference.PointerValue;
+                classDescriptor = reference.Value;
             }
 
             if (classDescriptor?.Header == TokenType.TC_NULL) throw new InvalidDataException("The class descriptor is a null reference.");
@@ -181,7 +195,7 @@ namespace JavaSerializer
             {
                 for(int i = 0; i < size; i++)
                 {
-                    _ = ReadContent(out var resultingObject, true, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_ARRAY, TokenType.TC_OBJECT, TokenType.TC_STRING, TokenType.TC_LONGSTRING);
+                    _ = ReadContent<IContent>(out var resultingObject, true, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_ARRAY, TokenType.TC_OBJECT, TokenType.TC_STRING, TokenType.TC_LONGSTRING);
                     if (resultingObject is null) throw new EndOfStreamException();
 
                     content.Data[i] = resultingObject;
@@ -191,7 +205,7 @@ namespace JavaSerializer
 
         private void ReadObject(ObjectContent content)
         {
-            _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_STRING, TokenType.TC_LONGSTRING);
+            _ = ReadContent<IClassDescriptor>(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_STRING, TokenType.TC_LONGSTRING);
             if (classDescriptor is null) throw new EndOfStreamException();
             content.ClassDescriptor = classDescriptor;
             _handleMapping.Add(content);
@@ -218,7 +232,7 @@ namespace JavaSerializer
                 }
                 else if(field is ObjectField objectField)
                 {
-                    _ = ReadContent(out var resultingObject, true, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_ARRAY, TokenType.TC_OBJECT, TokenType.TC_LONGSTRING, TokenType.TC_STRING);
+                    _ = ReadContent<IContent>(out var resultingObject, true, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_ARRAY, TokenType.TC_OBJECT, TokenType.TC_LONGSTRING, TokenType.TC_STRING);
                     if (resultingObject is null) throw new EndOfStreamException();
 
                     content.Values[objectField] = resultingObject;
@@ -251,9 +265,9 @@ namespace JavaSerializer
 
             while (superClassDescriptor?.Header == TokenType.TC_REFERENCE || superClassDescriptor?.Header == TokenType.TC_CLASSDESC)
             {
-                while(superClassDescriptor?.Header == TokenType.TC_REFERENCE && superClassDescriptor is ReferenceContent referenceSuper)
+                while(superClassDescriptor?.Header == TokenType.TC_REFERENCE && superClassDescriptor is ClassDescriptorReference referenceSuper)
                 {
-                    superClassDescriptor = referenceSuper.PointerValue;
+                    superClassDescriptor = referenceSuper.Value;
                 }
 
                 if(superClassDescriptor?.Header == TokenType.TC_CLASSDESC && superClassDescriptor is ClassDescriptorContent classDescriptorSuperClass)
@@ -286,20 +300,20 @@ namespace JavaSerializer
 
         private void ReadEnum(EnumContent content)
         {
-            _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
+            _ = ReadContent<IClassDescriptor>(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
             if (classDescriptor is null) throw new EndOfStreamException();
             content.ClassDescriptor = classDescriptor;
 
             _handleMapping.Add(content);
 
-            _ = ReadContent(out var stringContent, true, TokenType.TC_STRING, TokenType.TC_LONGSTRING, TokenType.TC_REFERENCE);
+            _ = ReadContent<IString>(out var stringContent, true, TokenType.TC_STRING, TokenType.TC_LONGSTRING, TokenType.TC_REFERENCE);
             if (stringContent is null) throw new EndOfStreamException();
             content.EnumConstantName = stringContent;
         }
 
         private void ReadClass(ClassContent content)
         {
-            _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
+            _ = ReadContent<IClassDescriptor>(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
             if (classDescriptor is null) throw new EndOfStreamException();
             content.ClassDescriptor = classDescriptor;
 
@@ -320,13 +334,13 @@ namespace JavaSerializer
                 }
             }
 
-            while (ReadContent(out var annotation, false /* Allow all types */) && annotation is not EndBlockDataContent && annotation is not null)
+            while (ReadContent<IContent>(out var annotation, false /* Allow all types */) && annotation is not EndBlockDataContent && annotation is not null)
             {
                 content.Annotations ??= new List<IContent>();
                 content.Annotations.Add(annotation);
             }
 
-            _ = ReadContent(out var superClassDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
+            _ = ReadContent<IClassDescriptor>(out var superClassDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
             if (superClassDescriptor is null) throw new EndOfStreamException();
             content.SuperClassDescriptor = superClassDescriptor;
         }
@@ -348,13 +362,13 @@ namespace JavaSerializer
                 }
             }
 
-            while(ReadContent(out var annotation, false /* Allow all types */) && annotation is not EndBlockDataContent && annotation is not null)
+            while(ReadContent<IContent>(out var annotation, false /* Allow all types */) && annotation is not EndBlockDataContent && annotation is not null)
             {
                 content.Annotations ??= new List<IContent>();
                 content.Annotations.Add(annotation);
             }
 
-            _ = ReadContent(out var superClassDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
+            _ = ReadContent<IClassDescriptor>(out var superClassDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
             if (superClassDescriptor is null) throw new EndOfStreamException();
             content.SuperClassDescriptor = superClassDescriptor;
         }
@@ -365,7 +379,7 @@ namespace JavaSerializer
             var fieldName = _reader.ReadUInt16String();
             if(fieldType == FieldType.Array || fieldType == FieldType.Object)
             {
-                _ = ReadContent(out var stringContent, true, TokenType.TC_STRING, TokenType.TC_LONGSTRING, TokenType.TC_REFERENCE);
+                _ = ReadContent<IString>(out var stringContent, true, TokenType.TC_STRING, TokenType.TC_LONGSTRING, TokenType.TC_REFERENCE);
                 if (stringContent is null) throw new EndOfStreamException();
 
                 return new ObjectField(fieldType, fieldName, stringContent);

@@ -2,14 +2,15 @@
 
 namespace JavaSerializer.Content.Object
 {
-    public class ReferenceContent : IObject
+    public abstract class ReferenceContent : IObject
     {
-        public ReferenceContent(TokenType contentType)
+        protected ReferenceContent(TokenType contentType, IContent pointerValue)
         {
             Header = contentType;
+            PointerValue = pointerValue;
         }
 
         public TokenType Header { get; }
-        public IContent? PointerValue { get; set; }
+        public IContent PointerValue { get; }
     }
 }

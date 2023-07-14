@@ -1,11 +1,12 @@
 ﻿using JavaSerializer.Content.Interface;
 using JavaSerializer.Content.Object.ClassDesc.FieldDescriptor.Interface;
 using JavaSerializer.Content.Object.ClassDesc.Interface;
+using JavaSerializer.Content.Object.Inteface;
 using System.Collections.Generic;
 
 namespace JavaSerializer.Content.Object.ClassDesc
 {
-    public class ClassDescriptorContent : IClassDescContent
+    public class ClassDescriptorContent : IClassDesciptorContent
     {
         public ClassDescriptorContent(TokenType contentType)
         {
@@ -18,6 +19,6 @@ namespace JavaSerializer.Content.Object.ClassDesc
         public ClassDescFlag? ClassDescFlag { get; set; }
         public IList<IClassField>? Fields { get; set; }
         public IList<IContent>? Annotations { get; set; }
-        public IContent? SuperClassDescriptor { get; set; }
+        public IClassDescriptor? SuperClassDescriptor { get; set; }
     }
 }
