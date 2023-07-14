@@ -187,7 +187,7 @@ namespace JavaSerializer
             {
                 for(int i = 0; i < size; i++)
                 {
-                    _ = ReadContent(out var resultingObject, true, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_ARRAY, TokenType.TC_OBJECT);
+                    _ = ReadContent(out var resultingObject, true, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_ARRAY, TokenType.TC_OBJECT, TokenType.TC_STRING, TokenType.TC_LONGSTRING);
                     if (resultingObject is null) throw new EndOfStreamException("End of stream reached");
 
                     content.Data[i] = resultingObject;
@@ -197,7 +197,7 @@ namespace JavaSerializer
 
         private void ReadObject(ObjectContent content)
         {
-            _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
+            _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_STRING, TokenType.TC_LONGSTRING);
             if (classDescriptor is null) throw new EndOfStreamException("End of stream reached");
             content.ClassDescriptor = classDescriptor;
             _handleMapping.Add(content);
