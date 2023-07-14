@@ -10,7 +10,7 @@ namespace JavaSerializer.Content.Object
         }
 
         public TokenType Header { get; }
-        public string? EnumConstantName { get; set; }
+        public IContent? EnumConstantName { get; set; }
         public IContent? ClassDescriptor { get; set; }
     }
 }

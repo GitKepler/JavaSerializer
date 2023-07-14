@@ -1,11 +1,12 @@
-﻿using JavaSerializer.Content.Object.ClassDesc.FieldDescriptor.Interface;
+﻿using JavaSerializer.Content.Interface;
+using JavaSerializer.Content.Object.ClassDesc.FieldDescriptor.Interface;
 using JavaSerializer.Content.Object.String.Interface;
 
 namespace JavaSerializer.Content.Object.ClassDesc.FieldDescriptor
 {
     public class ObjectField : IClassField
     {
-        public ObjectField(FieldType fieldType, string fieldName, string fieldDescriptorString)
+        public ObjectField(FieldType fieldType, string fieldName, IContent fieldDescriptorString)
         {
             Type = fieldType;
             Name = fieldName;
@@ -14,6 +15,6 @@ namespace JavaSerializer.Content.Object.ClassDesc.FieldDescriptor
 
         public FieldType Type { get; }
         public string Name { get; }
-        public string UnderlyingType { get; }
+        public IContent UnderlyingType { get; }
     }
 }

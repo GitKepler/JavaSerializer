@@ -10,14 +10,16 @@ namespace JavaSerializerTests
         {
         }
 
-        // Simple array with { 2001 } :: int[]
+        // Simple array with [ 2001 ] :: int[]
         private readonly byte[] Sample1 = Convert.FromBase64String("rO0ABXVyAAJbSU26YCZ26rKlAgAAeHAAAAABAAAH0Q==");
-        // Simple array with { 2001, 2002 } :: int[]
+        // Simple array with [ 2001, 2002 ] :: int[]
         private readonly byte[] Sample2 = Convert.FromBase64String("rO0ABXVyAAJbSU26YCZ26rKlAgAAeHAAAAACAAAH0QAAB9I=");
-        // String array with { "This", "Is", "A Test" } :: string[]
+        // String array with [ "This", "Is", "A Test" ] :: string[]
         private readonly byte[] Sample3 = Convert.FromBase64String("rO0ABXVyABNbTGphdmEubGFuZy5TdHJpbmc7rdJW5+kde0cCAAB4cAAAAAN0AARUaGlzdAACSXN0AAZBIFRlc3Q=");
-        // Integer array with { 1, 2, 3 } :: Integer[]
+        // Integer array with [ 1, 2, 3 ] :: Integer[]
         private readonly byte[] Sample4 = Convert.FromBase64String("rO0ABXVyABRbTGphdmEubGFuZy5JbnRlZ2VyO/6XraABg+IbAgAAeHAAAAADc3IAEWphdmEubGFuZy5JbnRlZ2VyEuKgpPeBhzgCAAFJAAV2YWx1ZXhyABBqYXZhLmxhbmcuTnVtYmVyhqyVHQuU4IsCAAB4cAAAAAFzcQB+AAIAAAACc3EAfgACAAAAAw==");
+        // Simple class with [{ author: "Test_Auth1", subect: "Test_Sub1", yearwritten: 2001 }] :: ReadingMaterial[]
+        private readonly byte[] Sample5 = Convert.FromBase64String("rO0ABXVyABJbTFJlYWRpbmdNYXRlcmlhbDtMeJlmUd2DtQIAAHhwAAAAAXNyAA9SZWFkaW5nTWF0ZXJpYWxUHlhqoGAGAwIAA0kAC3llYXJ3cml0dGVuTAAGYXV0aG9ydAASTGphdmEvbGFuZy9TdHJpbmc7TAAHc3ViamVjdHEAfgADeHAAAAfRdAAKVGVzdF9BdXRoMXQACVRlc3RfU3ViMQ==");
 
         [Test]
         public void TestThatArraysWithSingleIntElementAreParsed()
@@ -165,6 +167,63 @@ namespace JavaSerializerTests
                 Assert.That(typedEntries[0].Values?.Values.Single(), Is.EqualTo(1));
                 Assert.That(typedEntries[1].Values?.Values.Single(), Is.EqualTo(2));
                 Assert.That(typedEntries[2].Values?.Values.Single(), Is.EqualTo(3));
+            });
+        }
+
+        [Test]
+        public void TestThatArraysWithSingleObjectAreParsed()
+        {
+            var memoryStream = new MemoryStream(Sample5);
+            var reader = new JavaSerializer.SerializedStreamReader(memoryStream);
+
+            reader.Read();
+
+            Assert.That(reader.Content, Is.Not.Null);
+            Assert.That(reader.Content, Has.Count.EqualTo(1));
+
+            var content = reader.Content[0];
+
+            Assert.That(content, Is.InstanceOf<ArrayContent>());
+
+            var typedContent = (ArrayContent)content;
+            Assert.That(typedContent.Data, Is.Not.Null);
+            Assert.Multiple(() =>
+            {
+                Assert.That(typedContent.ClassDescriptor, Is.Not.Null);
+                Assert.That(typedContent.Data, Has.Length.EqualTo(1));
+                Assert.That(typedContent.Data[0], Is.InstanceOf<ObjectContent>());
+            });
+
+            var typedEntry = typedContent.Data.OfType<ObjectContent>().Single();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(typedEntry.Values, Is.Not.Null);
+                Assert.That(typedEntry.Values, Has.Count.EqualTo(3));
+            });
+
+            Assert.That(typedEntry.Values?.Keys, Has.Count.EqualTo(3));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(typedEntry.Values.Keys.ElementAt(0).Name, Is.EqualTo("yearwritten"));
+                Assert.That(typedEntry.Values.Keys.ElementAt(1).Name, Is.EqualTo("author"));
+                Assert.That(typedEntry.Values.Keys.ElementAt(2).Name, Is.EqualTo("subject"));
+            });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(typedEntry.Values.Values.ElementAt(0), Is.EqualTo(2001));
+                Assert.That(typedEntry.Values.Values.ElementAt(1), Is.InstanceOf<UtfStringContent>());
+                Assert.That(typedEntry.Values.Values.ElementAt(2), Is.InstanceOf<UtfStringContent>());
+            });
+
+            var strings = typedEntry.Values.Values.OfType<UtfStringContent>().ToImmutableArray();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(strings[0].String, Is.EqualTo("Test_Auth1"));
+                Assert.That(strings[1].String, Is.EqualTo("Test_Sub1"));
             });
         }
     }

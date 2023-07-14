@@ -225,7 +225,7 @@ namespace JavaSerializer
                 }
                 else if(field is ObjectField objectField)
                 {
-                    _ = ReadContent(out var resultingObject, true, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_ARRAY, TokenType.TC_OBJECT);
+                    _ = ReadContent(out var resultingObject, true, TokenType.TC_NULL, TokenType.TC_REFERENCE, TokenType.TC_ARRAY, TokenType.TC_OBJECT, TokenType.TC_LONGSTRING, TokenType.TC_STRING);
                     if (resultingObject is null) throw new EndOfStreamException("End of stream reached");
 
                     content.Values[objectField] = resultingObject;
@@ -294,22 +294,6 @@ namespace JavaSerializer
             content.String = _reader.ReadUInt16String();
         }
 
-        private string ReadStringWithoutHandle()
-        {
-            var tokenType = _reader.ReadTokenType();
-            var length = tokenType switch
-            {
-                TokenType.TC_STRING => _reader.ReadUInt16BE(),
-                TokenType.TC_LONGSTRING => _reader.ReadInt64BE(),
-                _ => throw new InvalidDataException($"Expected a {TokenType.TC_STRING} or {TokenType.TC_LONGSTRING}, but received a {tokenType}."),
-            };
-            if (length > int.MaxValue) throw new Exception($"A string longer than {int.MaxValue} is unsupported. Current value = {length}");
-
-            var intLength = (int)length;
-            var data = _reader.ReadBytes(intLength);
-            return Encoding.UTF8.GetString(data);
-        }
-
         private void ReadEnum(EnumContent content)
         {
             _ = ReadContent(out var classDescriptor, true, TokenType.TC_CLASSDESC, TokenType.TC_PROXYCLASSDESC, TokenType.TC_NULL, TokenType.TC_REFERENCE);
@@ -318,7 +302,9 @@ namespace JavaSerializer
 
             _handleMapping.Add(content);
 
-            content.EnumConstantName = ReadStringWithoutHandle();
+            _ = ReadContent(out var stringContent, true, TokenType.TC_STRING, TokenType.TC_LONGSTRING, TokenType.TC_REFERENCE);
+            if (stringContent is null) throw new EndOfStreamException("End of stream reached");
+            content.EnumConstantName = stringContent;
         }
 
         private void ReadClass(ClassContent content)
@@ -389,8 +375,10 @@ namespace JavaSerializer
             var fieldName = _reader.ReadUInt16String();
             if(fieldType == FieldType.Array || fieldType == FieldType.Object)
             {
-                var fieldDescriptorString = ReadStringWithoutHandle();
-                return new ObjectField(fieldType, fieldName, fieldDescriptorString);
+                _ = ReadContent(out var stringContent, true, TokenType.TC_STRING, TokenType.TC_LONGSTRING, TokenType.TC_REFERENCE);
+                if (stringContent is null) throw new EndOfStreamException("End of stream reached");
+
+                return new ObjectField(fieldType, fieldName, stringContent);
             }
 
             return new PrimitiveField(fieldType, fieldName);
