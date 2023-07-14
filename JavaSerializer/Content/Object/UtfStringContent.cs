@@ -1,8 +1,8 @@
-﻿using JavaSerializer.Content.Object.String.Interface;
+﻿using JavaSerializer.Content.Interface;
 
-namespace JavaSerializer.Content.Object.String
+namespace JavaSerializer.Content.Object
 {
-    public class UtfStringContent : IStringContent
+    public class UtfStringContent : IObject
     {
         public UtfStringContent(TokenType contentType)
         {

@@ -1,6 +1,5 @@
 ﻿using JavaSerializer.Content.Interface;
 using JavaSerializer.Content.Object.ClassDesc.FieldDescriptor.Interface;
-using JavaSerializer.Content.Object.String.Interface;
 
 namespace JavaSerializer.Content.Object.ClassDesc.FieldDescriptor
 {

@@ -1,5 +1,4 @@
 using JavaSerializer.Content.Object;
-using JavaSerializer.Content.Object.String;
 
 namespace JavaSerializerTests
 {

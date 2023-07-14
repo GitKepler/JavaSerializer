@@ -10,7 +10,6 @@ using JavaSerializer.Content.Object;
 using JavaSerializer.Content.Object.ClassDesc;
 using JavaSerializer.Content.Object.ClassDesc.FieldDescriptor;
 using JavaSerializer.Content.Object.ClassDesc.FieldDescriptor.Interface;
-using JavaSerializer.Content.Object.String;
 
 namespace JavaSerializer
 {
@@ -77,15 +76,11 @@ namespace JavaSerializer
                     ReadArray(arrayContent);
                     content = arrayContent;
                     break;
+                case TokenType.TC_LONGSTRING: // done
                 case TokenType.TC_STRING: // done
                     var stringContent = new UtfStringContent(contentType);
                     ReadString(stringContent);
                     content = stringContent;
-                    break;
-                case TokenType.TC_LONGSTRING: // done
-                    var longStringContent = new LongUtfStringContent(contentType);
-                    ReadString(longStringContent);
-                    content = longStringContent;
                     break;
                 case TokenType.TC_ENUM: // done
                     var enumContent = new EnumContent(contentType);
@@ -278,18 +273,15 @@ namespace JavaSerializer
             return fields.SelectMany(x => x).ToList();
         }
 
-        private void ReadString(LongUtfStringContent content)
-        {
-            _handleMapping.Add(content);
-
-            content.String = _reader.ReadInt64String();
-        }
-
         private void ReadString(UtfStringContent content)
         {
             _handleMapping.Add(content);
-
-            content.String = _reader.ReadUInt16String();
+            content.String = content.Header switch
+            {
+                TokenType.TC_STRING => _reader.ReadUInt16String(),
+                TokenType.TC_LONGSTRING => _reader.ReadInt64String(),
+                _ => throw new InvalidDataException($"The string element has an invalid header ({content.Header})."),
+            };
         }
 
         private void ReadEnum(EnumContent content)
