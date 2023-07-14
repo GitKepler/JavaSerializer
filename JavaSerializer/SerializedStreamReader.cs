@@ -177,8 +177,7 @@ namespace JavaSerializer
                         FieldType.Long => _reader.ReadInt64BE(),
                         FieldType.Short => _reader.ReadInt16BE(),
                         FieldType.Boolean => _reader.ReadBoolean(),
-                        FieldType.Array => throw new InvalidDataException("An array is not a primitive field type."),
-                        FieldType.Object => throw new InvalidDataException("An object is not a primitive field type."),
+                        FieldType.Array or FieldType.Object => throw new InvalidDataException($"A {fieldType} is not a primitive field type."),
                         _ => throw new InvalidDataException($"Unknown value provided ({fieldType})")
                     };
                 }
@@ -218,8 +217,7 @@ namespace JavaSerializer
                         FieldType.Long => _reader.ReadInt64BE(),
                         FieldType.Short => _reader.ReadInt16BE(),
                         FieldType.Boolean => _reader.ReadBoolean(),
-                        FieldType.Array => throw new InvalidDataException("An array is not a primitive field type."),
-                        FieldType.Object => throw new InvalidDataException("An object is not a primitive field type."),
+                        FieldType.Array or FieldType.Object => throw new InvalidDataException($"A {primitiveField.Type} is not a primitive field type."),
                         _ => throw new InvalidDataException($"Unknown value provided ({primitiveField.Type})")
                     };
                 }
