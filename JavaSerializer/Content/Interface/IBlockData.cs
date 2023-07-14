@@ -2,5 +2,6 @@
 {
     public interface IBlockData : IContent
     {
+        byte[]? Data { get; set; }
     }
 }
